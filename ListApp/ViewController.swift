@@ -10,19 +10,19 @@ import UIKit
 import CoreData
 
 protocol CellDelegate : class {
-    func sendIP(_ sender: ZelleTableViewCell)
+  func sendIP(_ sender: ZelleTableViewCell)
     
 }
 
 
-class tableViewController: UITableViewController {
-    
+class tableViewController: UITableViewController, UpdateDataDelegate {
     
     
     
     var listItems = [NSManagedObject]()
     
     let SensorData = sensorData()
+    
     
     
     override func viewWillAppear(_ animated: Bool) {
@@ -37,15 +37,19 @@ class tableViewController: UITableViewController {
         } catch  {
             print("error")
         }
-        
     }
     
-    @IBAction func Add(_ sender: Any) {
-        addItem()
-    }
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        SensorData.delegate = self
+    }
+    
+   
+    
+    @IBAction func Add(_ sender: Any) {
+        addItem()
     }
     
     func addItem() {
@@ -92,65 +96,98 @@ class tableViewController: UITableViewController {
             print("error")
         }
         
-    
-    
     }
-    
-    
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
-    }
-    
+
+
+//--------------------------------------------------------------------------------------------------------------------------------------
+
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return listItems.count
     }
-    
-    
-    
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+
+//--------------------------------------------------------------------------------------------------------------------------------------
+
+
+override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
     let cell = tableView.dequeueReusableCell(withIdentifier: "Cell")! as! ZelleTableViewCell
-        
-
-        
+    
         let item = listItems[indexPath.row]
         
         cell.textLabel?.text = item.value(forKey: "item") as? String
-        
-       
-        //cell.Button.tag = indexPath.row
-        //cell.Button.setTitle(item.value(forKey: "item") as? String, for: .normal)
-        //cell.Button.addTarget(self, action:  , for: UIControlEvents.touchUpInside)
-        cell.delegate = self
-        
     
+    
+    //let cell = tableView.cellForRow(at: indexPath) as! ZelleTableViewCell
+    cell.TempLabel?.text = ("\(MyVariables.Temperatur)  C°")
+    cell.HumLabel?.text = ("\(MyVariables.Humi)  %")
+   
     return cell 
     }
-    
+
+//--------------------------------------------------------------------------------------------------------------------------------------
 
     
-   //Delete Cell on Tap
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+     
+        
+        
+        let selectedName = listItems[indexPath.row]
+        let name = selectedName.value(forKey: "item") as? String
+        
+        //let cell = tableView.cellForRow(at: indexPath) as! ZelleTableViewCell
+        //cell.TempLabel?.text = ("\(MyVariables.Temperatur)  C°")
+        //cell.HumLabel?.text = ("\(MyVariables.Humi)  %")
+        
+        
+        
+        print("Kommt IndexPathRow")
+        print(indexPath.row)
+        print("Kommt IndexPath")
+        print(indexPath)
+        print("Kommt SelectedName")
+        print(selectedName)
+        print("Kommt Name")
+        print(name!)
+        
+        MyVariables.IPAdress = name as! String
+        MyVariables.IndexPathItem = indexPath.item
+        MyVariables.IndexSection = indexPath.section
+
     
- /*  override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let appDelegate = UIApplication.shared.delegate as! AppDelegate
-      let managedContext = appDelegate.persistentContainer.viewContext
+        print(MyVariables.IPAdress)
         
-    let entity = NSEntityDescription.entity(forEntityName: "ListEntity", in: managedContext)
-      tableView.reloadRows(at: [indexPath], with: UITableViewRowAnimation.right)
+        SensorData.Humidity()
         
-    managedContext.delete(listItems[indexPath.row])
-        listItems.remove(at: indexPath.row)
-        self.tableView.reloadData()
+    
+
         
-        
+
     }
- 
- */
 
-  //Delete Cell on Swipe
+//--------------------------------------------------------------------------------------------------------------------------------------
     
-    // Override to support conditional editing of the table view.
+    //Delete Cell on Tap
+    
+    /*  override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+     let appDelegate = UIApplication.shared.delegate as! AppDelegate
+     let managedContext = appDelegate.persistentContainer.viewContext
+     
+     let entity = NSEntityDescription.entity(forEntityName: "ListEntity", in: managedContext)
+     tableView.reloadRows(at: [indexPath], with: UITableViewRowAnimation.right)
+     
+     managedContext.delete(listItems[indexPath.row])
+     listItems.remove(at: indexPath.row)
+     self.tableView.reloadData()
+     
+     
+     }
+     
+     */
+    //END of Delete Cell on Tap
+    
+//--------------------------------------------------------------------------------------------------------------------------------------
+    
+//Delete Cell on Swipe
     override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
         return true
     }
@@ -167,45 +204,27 @@ class tableViewController: UITableViewController {
             listItems.remove(at: indexPath.row)
             self.tableView.reloadData()
         } else {
-            }
         }
-        
+    }
+    
+//END of Delete on Swipe
+    
+//--------------------------------------------------------------------------------------------------------------------------------------
+    
+    override func didReceiveMemoryWarning() {
+        super.didReceiveMemoryWarning()
+        // Dispose of any resources that can be recreated.
+    }
+    
+//--------------------------------------------------------------------------------------------------------------------------------------
+ 
     
     
-    
-    //END of Delete on Swipe
-    
-    
-   override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        
-    
-        let cell = tableView.cellForRow(at: indexPath) as! ZelleTableViewCell
-        
-        let selectedName = listItems[indexPath.row]
-        
-        let name = selectedName.value(forKey: "item") as? String
-        
-        print(selectedName)
-        print(name!)
-        
-        MyVariables.IPAdress = name as! String
-    
-    
-        print(MyVariables.IPAdress)
-        SensorData.Humidity()
-    
-    
-        cell.TempLabel.text = ("\(MyVariables.Temperatur)  C°")
-        cell.HumLabel.text = ("\(MyVariables.Humi)  %")
-    
-        
+    func didFinishUpdate(_ sender:sensorData) {
+        print("Aktualisiere TableView")
+       //tableView.reloadData()
+       //let indexPath = IndexPath(item: 0, section: 0)
+        let indexPath = IndexPath(item: MyVariables.IndexPathItem, section: MyVariables.IndexSection )
+        self.tableView.reloadRows(at: [indexPath], with: .right)
     }
 }
-    
-
-extension tableViewController:  CellDelegate {
-    func sendIP(_ sender: ZelleTableViewCell) {
-       print("Hello")
-    }
-}
-

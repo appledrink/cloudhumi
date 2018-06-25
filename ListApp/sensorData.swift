@@ -10,26 +10,41 @@ import Foundation
 import UIKit
 
 
+
+
 // Definition View-Übergreifender Variablen
 struct MyVariables {
     static var IPAdress = String()
     static var Temperatur = String()
     static var Humi = String()
+    
+    static var IndexPathItem = Int()
+    static var IndexSection = Int()
+    
     var temperatur_wert = String()
-    var feuchtigkeit_wert = String ()
+    var feuchtigkeit_wert = String()
+    
+    
+    
     
 }
 
 
 
+protocol UpdateDataDelegate {
+    func didFinishUpdate(_ sender:sensorData)
+}
+
 
 
 class sensorData: NSObject {
     
+    var delegate: UpdateDataDelegate?
+    
     var inputStream: InputStream!
     var outputStream: OutputStream!
     
-    
+
     let maxReadLength = 1024
     
     
@@ -66,12 +81,19 @@ class sensorData: NSObject {
     func Humidity() {
         Connect()
         sendAnfrage()
+        
     }
     
 }
 
 
+
+
+
+
 extension sensorData: StreamDelegate{
+    
+
     func stream(_ aStream: Stream, handle eventCode: Stream.Event) {
         switch eventCode {
         case Stream.Event.hasBytesAvailable:
@@ -91,6 +113,8 @@ extension sensorData: StreamDelegate{
     
     
     private func readReceivedBytes(stream: InputStream) {
+        
+
         let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: maxReadLength)
         
         while stream.hasBytesAvailable {
@@ -99,7 +123,16 @@ extension sensorData: StreamDelegate{
             print("numberOfBytesRead:", numberOfBytesRead)
             print("buffer: ", buffer)
             
+            
+            
             _ = processedMessageString(buffer: buffer, length: numberOfBytesRead)
+
+            
+            print("Start Update")
+            
+            self.didReceivedNewData()
+            
+            print("End Update")
             
             
             if numberOfBytesRead < 0 {
@@ -111,6 +144,13 @@ extension sensorData: StreamDelegate{
         }
         
     }
+    
+    func didReceivedNewData(){
+        print("Werte Empfangen")
+        delegate?.didFinishUpdate(self)
+    }
+    
+    
     
     private func processedMessageString(buffer: UnsafeMutablePointer<UInt8>,
                                         length: Int) -> MyVariables? {
@@ -133,7 +173,6 @@ extension sensorData: StreamDelegate{
         MyVariables.Humi = feuchtigkeit_wert
         
         
-        //return MyVariables(temperatur_wert: temperatur_wert, feuchtigkeit_wert: feuchtigkeit_wert)
         return MyVariables(temperatur_wert: temperatur_wert, feuchtigkeit_wert: feuchtigkeit_wert)
         
     }
